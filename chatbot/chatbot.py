@@ -5,12 +5,16 @@ from groq import Groq
 from starlette.middleware.cors import CORSMiddleware
 import warnings
 import logging
+from document_handler import DocumentHandler
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
 
 # Initialize FastAPI app
 app = FastAPI()
+
+# Initialize DocumentHandler
+document_handler = DocumentHandler()
 
 # Set up logging
 logging.basicConfig(level=logging.ERROR)
@@ -29,8 +33,25 @@ class ChatRequest(BaseModel):
     user_input: str
     chat_history: List[Message]
 
+# Load and index documents during startup
+@app.on_event("startup")
+async def load_documents():
+    document_handler.load_document("checkers_rules.json")
+    documents = document_handler.load_document("checkers_rules.json")
+    document_handler.index_documents(documents)
+
+
 # Chatbot logic with Groq
 def get_groq_response(user_input: str, chat_history: List[Message]) -> str:
+    # Check if the user query relates to game rules
+    if "rules" in user_input.lower():
+        try:
+            document_results = document_handler.query_documents(user_input)
+            return "Here are some relevant game rules:\n" + "\n".join(document_results)
+        except Exception as e:
+            return "Sorry, I couldn't find any relevant game rules."
+
+    # Otherwise, proceed with the chatbot logic
     messages = chat_history + [{"role": "user", "content": user_input}]
     chat_completion = groq_client.chat.completions.create(
         messages=messages,
@@ -43,6 +64,8 @@ async def chat_endpoint(request: ChatRequest):
     try:
         user_input = request.user_input
         chat_history = request.chat_history
+
+        # Get the response (from documents or chatbot)
         bot_response = get_groq_response(user_input, chat_history)
         return {"response": bot_response}
     except Exception as e:
