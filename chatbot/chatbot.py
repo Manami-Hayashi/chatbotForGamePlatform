@@ -6,6 +6,13 @@ from starlette.middleware.cors import CORSMiddleware
 import warnings
 import logging
 from document_handler import DocumentHandler
+from dotenv import load_dotenv
+import os
+
+# load env variables
+load_dotenv()
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -20,8 +27,8 @@ document_handler = DocumentHandler()
 logging.basicConfig(level=logging.ERROR)
 
 # Initialize Groq client with environment variable for API key
-groq_api_key = "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"  # Replace with an environment variable in production
-groq_client = Groq(api_key=groq_api_key)
+# groq_api_key = "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"  # Replace with an environment variable in production
+groq_client = Groq(api_key=GROQ_API_KEY)
 
 # Define message model
 class Message(BaseModel):
@@ -39,6 +46,7 @@ async def load_documents():
     document_handler.load_document("checkers_rules.json")
     documents = document_handler.load_document("checkers_rules.json")
     document_handler.index_documents(documents)
+
 
 
 # Chatbot logic with Groq

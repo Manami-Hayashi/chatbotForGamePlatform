@@ -1,13 +1,19 @@
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+# from langchain_community.text_splitter import CharacterTextSplitter
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
+import os
+from dotenv import load_dotenv
+
+# load env variables
+load_dotenv()
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 class DocumentHandler:
     def __init__(self):
-        self.text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=100)
-        self.embedding_model = OpenAIEmbeddings()
-        self.vector_store = None
+        self.documents = []
 
     def load_document(self, file_path: str):
         # Example for PDF loading
@@ -35,6 +41,7 @@ class DocumentHandler:
         """
         Split documents into chunks and create a vector index.
         """
+        from chatbot.groq_embeddings import GroqEmbeddings
         texts = self.text_splitter.split_documents(documents)
         self.vector_store = FAISS.from_documents(texts, self.embedding_model)
 
