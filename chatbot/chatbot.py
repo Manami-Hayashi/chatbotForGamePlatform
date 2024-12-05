@@ -5,7 +5,7 @@ from groq import Groq
 from starlette.middleware.cors import CORSMiddleware
 import warnings
 import logging
-from document_handler import DocumentHandler
+from chatbot.document_handler import DocumentHandler
 from dotenv import load_dotenv
 import os
 
