@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from groq import Groq
 from starlette.middleware.cors import CORSMiddleware
 import warnings
+from RAG import load_all_data, extract_content_and_create_documents, process_input
 
 # Suppress Groq-specific warnings if needed
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -58,7 +59,14 @@ def get_groq_response(userInput: str, chatHistory: List[Dict[str, str]]) -> str:
 async def chat_endpoint(request: ChatRequest):
     logger.info(f"Received request: {request.dict()}")  # Log the incoming request payload
     try:
-        bot_response = get_groq_response(request.userInput, [m.dict() for m in request.chatHistory])
+        # Load data and extract documents
+        files_list = ["checkers_rules.json", "platform_guidance.json"]
+        all_data = load_all_data(files_list)
+        documents = extract_content_and_create_documents(all_data)
+
+        # Process input question using RAG
+        bot_response = process_input(request.userInput, documents)
+        # bot_response = get_groq_response(request.userInput, [m.dict() for m in request.chatHistory])
         return {"response": bot_response}
     except ValueError as ve:
         logger.error("Validation error:", exc_info=True)
