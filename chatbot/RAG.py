@@ -1,9 +1,8 @@
 import os
 import json
 import streamlit as st
+from langchain_ollama import OllamaEmbeddings, OllamaLLM
 from langchain_community.vectorstores import Chroma
-from langchain_ollama import OllamaEmbeddings
-from langchain_community.llms import Ollama
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -33,8 +32,8 @@ def extract_content_and_create_documents(all_data):
         if "rules" in data:
             for rule in data["rules"]:
                 documents.append(Document(
-                    page_content=f"{rule['title']}: {rule['description']}",
-                    metadata={"type": "rule", "id": rule.get("id")}
+                    page_content=f"Game: Checkers - {rule['title']}: {rule['description']}",
+                    metadata={"type": "rule", "game": "Checkers", "id": rule.get("id")}
                 ))
 
         if "platformInfo" in data:
@@ -59,7 +58,6 @@ def extract_content_and_create_documents(all_data):
                         page_content=f"Quick Tip - {tip}: {description}",
                         metadata={"type": "quickTip", "tip": tip}
                     ))
-    print("Documents created:", documents)  # Debugging
     return documents
 
 # Function to validate document format
@@ -76,23 +74,33 @@ def process_input(question, documents):
     text_splitter = CharacterTextSplitter.from_tiktoken_encoder(chunk_size=7500, chunk_overlap=100)
     doc_splits = text_splitter.split_documents(documents)
 
-    print("Document splits created:", doc_splits)  # Debugging
     for doc in doc_splits:
         if not hasattr(doc, "page_content") or not hasattr(doc, "metadata"):
             raise ValueError(f"Split document missing 'page_content' or 'metadata': {doc}")
 
     # Use OllamaEmbeddings as the embedding function
-    embedding_function = OllamaEmbeddings(model="mxbai-embed-large")
+    try:
+        embedding_function = OllamaEmbeddings(model="mxbai-embed-large")
+    except Exception as e:
+        raise RuntimeError(f"Error initializing embedding function: {str(e)}")
 
     # Generate embeddings and store them in the vector store (Chroma)
     vectorstore = Chroma.from_documents(
         documents=doc_splits,
         embedding=embedding_function,
-        collection_name="game_rules"
+        collection_name="game_platform_rules",
+        persist_directory="chroma_db" # it will be created automatically
     )
     retriever = vectorstore.as_retriever()
 
-    model_local = Ollama(model="llma3.2:3b")
+    # Determine if query is related to "Checkers rules" or "Platform guidance"
+    if "checkers" in question.lower():
+        retriever = vectorstore.as_retriever(filters={"game": "Checkers"})
+    elif "platform" in question.lower():
+        retriever = vectorstore.as_retriever(filters={"type": "platformInfo"})
+
+    # initiialize the LLM model
+    model_local = OllamaLLM(model="llama3.2:3b")
 
     after_rag_template = """Answer the question based only on the following context:
        {context}
