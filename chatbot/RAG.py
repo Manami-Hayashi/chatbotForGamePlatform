@@ -102,9 +102,17 @@ def process_input(question, documents):
     # initiialize the LLM model
     model_local = OllamaLLM(model="llama3.2:3b")
 
-    after_rag_template = """Answer the question based only on the following context:
-       {context}
-       Question: {question}
+    after_rag_template = """You are an intelligent assistant with two purposes:\n
+    1. Answering questions about game rules and breaking them into step-by-step instructions.\n
+    2. Providing guidance about using the game platform.\n
+
+    When asked about a game's rules, summarize the rules clearly or provide step-by-step instructions as requested.
+    When asked about platform guidance, provide a direct and concise answer.
+
+    Context:
+    {context}
+
+    Question: {question}
        """
     after_rag_prompt = ChatPromptTemplate.from_template(after_rag_template)
     after_rag_chain = (
