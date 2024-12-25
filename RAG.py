@@ -13,7 +13,7 @@ from langchain.schema import Document
 def load_all_data(files_list):
     all_data = []
     for file_name in files_list:
-        file_path = os.path.join("C:\\Users\\mnmhy\\PycharmProjects\\chatbot\\files", file_name)
+        file_path = os.path.join("/files", file_name)
         try:
             if file_path.endswith(".json"):
                 with open(file_path, "r", encoding="utf-8") as file:
@@ -122,36 +122,3 @@ def process_input(question, documents):
             | StrOutputParser()
     )
     return after_rag_chain.invoke(question)
-
-# Streamlit UI (for user interaction)
-st.title("Game Platform Chatbot")
-st.write("Enter a question related to game rules or platform usage:")
-
-# Input fields for user question
-question = st.text_input("Ask your question here:")
-
-# Error handling and processing
-if st.button('Query Game Rules'):
-    with st.spinner('Processing...'):
-        if question:
-            try:
-                # Load data and extract documents
-                files_list = ["checkers_rules.json", "platform_guidance.json"]
-                all_data = load_all_data(files_list)
-
-                if not all_data:
-                    st.error("No data loaded from JSON files.")
-                else:
-                    documents = extract_content_and_create_documents(all_data)
-
-                    if not documents:
-                        st.error("No documents created from the loaded data.")
-                    else:
-                        # Process input question
-                        answer = process_input(question, documents)
-                        st.text_area("Answer", value=answer, height=300, disabled=True)
-
-            except Exception as e:
-                st.error(f"Error processing the request: {str(e)}")
-        else:
-            st.error("Please enter a question.")

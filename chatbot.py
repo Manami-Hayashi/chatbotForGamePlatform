@@ -20,8 +20,17 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Load required environment variables
+ollama_key_path = os.getenv("OLLAMA_KEY_PATH", "~/.ollama/id_ed25519")
+files_dir = os.getenv("FILES_DIR", "./files")
+vectorstore_dir = os.getenv("VECTORSTORE_DIR", "chroma_db")
+
+if not ollama_key_path or not os.path.exists(os.path.expanduser(ollama_key_path)):
+    logger.error("OLLAMA_KEY_PATH is not set or private key is missing.")
+    raise ValueError("OLLAMA_KEY_PATH is required and must point to the private key file.")
+
 # Load environment variables from .env file
-load_dotenv(dotenv_path="../chatbot.env")
+load_dotenv(dotenv_path="chatbot.env")
 groq_api_key = os.getenv("GROQ_API_KEY")
 if not groq_api_key:
     logger.error("GROQ_API_KEY environment variable is not set.")
