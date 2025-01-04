@@ -1,18 +1,16 @@
 services:
-
   ollama:
     image: ollama/ollama:latest
     ports:
       - "11434:11434"
     volumes:
-      - ./id_ed25519:/root/.ollama/id_ed25519
       - ./files:/app/files
     environment:
       - OLLAMA_SERVER_MODE=local
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:11434" ]
+      test: ["CMD", "curl", "-f", "http://localhost:11434"]
       interval: 30s
-      timeout: 10s
+      timeout: 60s
       retries: 3
 
   chatbot:
@@ -24,10 +22,10 @@ services:
     depends_on:
       - ollama
     environment:
-      - OLLAMA_KEY_PATH=/root/.ollama/id_ed25519
       - FILES_DIR=/app/files
       - VECTORSTORE_DIR=/app/chroma_db
+      - AZURE_KEYVAULT_NAME=team3chatbot
+      - AZURE_SECRET_NAME=ollama-private-key
     volumes:
       - ./files:/app/files
-      - ./id_ed25519:/root/.ollama/id_ed25519
       - ./chroma_db:/app/chroma_db

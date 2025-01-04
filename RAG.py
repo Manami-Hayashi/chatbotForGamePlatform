@@ -99,7 +99,7 @@ def process_input(question, documents):
     elif "platform" in question.lower():
         retriever = vectorstore.as_retriever(filters={"type": "platformInfo"})
 
-    # initiialize the LLM model
+    # initialize the LLM model
     model_local = OllamaLLM(model="llama3.2:3b")
 
     after_rag_template = """You are an intelligent assistant with two purposes:\n

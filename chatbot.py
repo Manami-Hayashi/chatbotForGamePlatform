@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, requests
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, validator
 from typing import List, Dict
@@ -10,6 +10,7 @@ from starlette.middleware.cors import CORSMiddleware
 import warnings
 from RAG import load_all_data, extract_content_and_create_documents, process_input
 
+
 # Suppress Groq-specific warnings if needed
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -20,14 +21,12 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+OLLAMA_URL = "https://ollama-app.lemonwater-f19da583.westeurope.azurecontainerapps.io/"
+
+
 # Load required environment variables
-ollama_key_path = os.getenv("OLLAMA_KEY_PATH", "~/.ollama/id_ed25519")
 files_dir = os.getenv("FILES_DIR", "./files")
 vectorstore_dir = os.getenv("VECTORSTORE_DIR", "chroma_db")
-
-if not ollama_key_path or not os.path.exists(os.path.expanduser(ollama_key_path)):
-    logger.error("OLLAMA_KEY_PATH is not set or private key is missing.")
-    raise ValueError("OLLAMA_KEY_PATH is required and must point to the private key file.")
 
 # Load environment variables from .env file
 load_dotenv(dotenv_path="chatbot.env")
@@ -62,6 +61,27 @@ def get_groq_response(userInput: str, chatHistory: List[Dict[str, str]]) -> str:
     except Exception as e:
         logger.error("Error generating Groq response", exc_info=True)
         return "An error occurred while processing your request."
+
+
+# Query Ollama service
+def query_ollama(prompt: str) -> str:
+    """Send a prompt to the deployed Ollama service and retrieve the response."""
+    try:
+        ollama_url = "https://ollama-app.lemonwater-f19da583.westeurope.azurecontainerapps.io"  # Replace with your deployed app URL
+        headers = {"Content-Type": "application/json"}
+        payload = {"model": "llama", "prompt": prompt}
+
+        # Send the API request
+        response = requests.post(f"{ollama_url}/v1/completions", json=payload, headers=headers)
+        response.raise_for_status()
+
+        # Parse and return the response
+        result = response.json()
+        return result.get("choices", [{}])[0].get("message", {}).get("content", "No response from Ollama")
+    except Exception as e:
+        logger.error(f"Error querying Ollama: {e}")
+        raise HTTPException(status_code=500, detail="Error querying Ollama service")
+
 
 # Chat endpoint
 @app.post("/chat", response_model=Dict[str, str], summary="Chat Endpoint", description="Endpoint for chatbot interaction.")

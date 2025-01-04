@@ -1,5 +1,5 @@
 # Stage 1: Ollama LLM Server
-FROM ollama/ollama:latest as ollama-server
+FROM ollama/ollama:latest AS ollama-server
 
 # Expose Ollama server's port for communication
 EXPOSE 11434
@@ -8,9 +8,8 @@ EXPOSE 11434
 ENTRYPOINT ["/bin/ollama"]
 CMD ["serve"]
 
-
 # Stage 2: FastAPI Application
-FROM python:3.12-slim as chatbot-app
+FROM python:3.12-slim AS chatbot-app
 
 # Set the working directory in the container
 WORKDIR /app
@@ -18,15 +17,21 @@ WORKDIR /app
 # Copy project files
 COPY . /app
 
-# Install required system packages and Python dependencies, and clean up intermediate files to reduce image size
-RUN apt-get update && apt-get install -y gcc libpq-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install required system packages and Python dependencies
+RUN apt-get update && apt-get install -y gcc libpq-dev curl && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir -r requirements.txt
-# add a non-root user to run the application
+
+# Switch to root user to adjust file permissions
+USER root
+# Copy and modify permissions for startup script
+COPY startup.sh /app/startup.sh
+RUN chmod +x /app/startup.sh
+
+# Add a non-root user for running the application
 RUN useradd -ms /bin/bash appuser
 USER appuser
 
 # Set environment variables for your application
-ENV OLLAMA_KEY_PATH="/root/.ollama/id_ed25519"
 ENV FILES_DIR="/app/files"
 ENV VECTORSTORE_DIR="/app/chroma_db"
 
