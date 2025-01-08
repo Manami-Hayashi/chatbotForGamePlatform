@@ -21,7 +21,7 @@ environment = os.getenv("ENVIRONMENT", "local")  # Default to "local"
 if environment == "azure":
     OLLAMA_URL = os.getenv("OLLAMA_URL", "https://ollama-app.azurecontainerapps.io")
 else:
-    OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")  # Local Ollama
+    OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")  # Local Ollama
 
 # Load file paths from environment variables
 files_dir = os.getenv("FILES_DIR", "/files")
