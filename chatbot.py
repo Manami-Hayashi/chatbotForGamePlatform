@@ -1,18 +1,11 @@
-from fastapi import FastAPI, HTTPException, Request, requests
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, validator
-from typing import List, Dict
 import os
 import logging
-from dotenv import load_dotenv
-from groq import Groq
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import List, Dict
 from starlette.middleware.cors import CORSMiddleware
-import warnings
 from RAG import load_all_data, extract_content_and_create_documents, process_input
-
-
-# Suppress Groq-specific warnings if needed
-warnings.filterwarnings("ignore", category=UserWarning)
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -21,22 +14,18 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-OLLAMA_URL = "https://ollama-app.lemonwater-f19da583.westeurope.azurecontainerapps.io/"
+# Determine environment (local or Azure)
+environment = os.getenv("ENVIRONMENT", "local")  # Default to "local"
 
+# Configure URLs based on the environment
+if environment == "azure":
+    OLLAMA_URL = os.getenv("OLLAMA_URL", "https://ollama-app.azurecontainerapps.io")
+else:
+    OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")  # Local Ollama
 
-# Load required environment variables
-files_dir = os.getenv("FILES_DIR", "./files")
+# Load file paths from environment variables
+files_dir = os.getenv("FILES_DIR", "/files")
 vectorstore_dir = os.getenv("VECTORSTORE_DIR", "chroma_db")
-
-# Load environment variables from .env file
-load_dotenv(dotenv_path="chatbot.env")
-groq_api_key = os.getenv("GROQ_API_KEY")
-if not groq_api_key:
-    logger.error("GROQ_API_KEY environment variable is not set.")
-    raise ValueError("GROQ_API_KEY is required for chatbot operation.")
-
-# Initialize Groq client
-groq_client = Groq(api_key=groq_api_key)
 
 # Define message model
 class Message(BaseModel):
@@ -48,31 +37,16 @@ class ChatRequest(BaseModel):
     userInput: str
     chatHistory: List[Message]
 
-# Chatbot logic with Groq
-def get_groq_response(userInput: str, chatHistory: List[Dict[str, str]]) -> str:
-    messages = chatHistory + [{"role": "user", "content": userInput}]
-    try:
-        chat_completion = groq_client.chat.completions.create(
-            messages=messages,
-            model="llama3-8b-8192",
-        )
-        logger.info(f"Groq response: {chat_completion}")
-        return chat_completion.choices[0].message.content
-    except Exception as e:
-        logger.error("Error generating Groq response", exc_info=True)
-        return "An error occurred while processing your request."
-
-
 # Query Ollama service
 def query_ollama(prompt: str) -> str:
-    """Send a prompt to the deployed Ollama service and retrieve the response."""
+    """Send a prompt to the Ollama service and retrieve the response."""
+    import requests  # Only imported here to avoid unused imports locally
     try:
-        ollama_url = "https://ollama-app.lemonwater-f19da583.westeurope.azurecontainerapps.io"  # Replace with your deployed app URL
         headers = {"Content-Type": "application/json"}
         payload = {"model": "llama", "prompt": prompt}
 
         # Send the API request
-        response = requests.post(f"{ollama_url}/v1/completions", json=payload, headers=headers)
+        response = requests.post(f"{OLLAMA_URL}/v1/completions", json=payload, headers=headers)
         response.raise_for_status()
 
         # Parse and return the response
@@ -81,7 +55,6 @@ def query_ollama(prompt: str) -> str:
     except Exception as e:
         logger.error(f"Error querying Ollama: {e}")
         raise HTTPException(status_code=500, detail="Error querying Ollama service")
-
 
 # Chat endpoint
 @app.post("/chat", response_model=Dict[str, str], summary="Chat Endpoint", description="Endpoint for chatbot interaction.")
@@ -95,7 +68,6 @@ async def chat_endpoint(request: ChatRequest):
 
         # Process input question using RAG
         bot_response = process_input(request.userInput, documents)
-        # bot_response = get_groq_response(request.userInput, [m.dict() for m in request.chatHistory])
         return {"response": bot_response}
     except ValueError as ve:
         logger.error("Validation error:", exc_info=True)
@@ -104,10 +76,14 @@ async def chat_endpoint(request: ChatRequest):
         logger.error("Error in chat endpoint:", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error. Please try again later.")
 
+# Read frontend URLs from environment variables
+frontend_urls = os.getenv("FRONTEND_URLS", "http://localhost:5173").split(",")
+backend_urls=os.getenv("BACKEND_URLS", "http://localhost:8090").split(",")
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],
+    allow_origins=[frontend_urls,backend_urls],  # Adjust based on your frontend URL for better security
     allow_methods=["*"],
     allow_headers=["*"],
 )
