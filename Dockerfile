@@ -36,7 +36,7 @@ ENV FILES_DIR="/app/files"
 ENV VECTORSTORE_DIR="/app/chroma_db"
 
 # Expose FastAPI port for user interaction
-EXPOSE 8000
+EXPOSE 3000
 
 # Command to run the FastAPI app
-CMD ["uvicorn", "chatbot:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "chatbot:app", "--host", "0.0.0.0", "--port", "3000"]

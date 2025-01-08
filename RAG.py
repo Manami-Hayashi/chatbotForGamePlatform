@@ -1,6 +1,5 @@
 import os
 import json
-import streamlit as st
 from langchain_ollama import OllamaEmbeddings, OllamaLLM
 from langchain_community.vectorstores import Chroma
 from langchain_core.runnables import RunnablePassthrough
@@ -9,11 +8,14 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.schema import Document
 
+
 # Function to load and process the game rules JSON files
 def load_all_data(files_list):
+    root_directory = os.path.dirname(os.path.abspath(__file__))
+    files_dir= os.path.join(root_directory, "files")
     all_data = []
     for file_name in files_list:
-        file_path = os.path.join("/files", file_name)
+        file_path = os.path.join(files_dir, file_name)
         try:
             if file_path.endswith(".json"):
                 with open(file_path, "r", encoding="utf-8") as file:
