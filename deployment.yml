@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: chatbot-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+      - name: ollama
+        image: acrteam3chatbot.azurecr.io/ollama:latest
+        ports:
+        - containerPort: 11434
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatbot
+  namespace: chatbot-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chatbot
+  template:
+    metadata:
+      labels:
+        app: chatbot
+    spec:
+      containers:
+      - name: chatbot
+        image: acrteam3chatbot.azurecr.io/chatbot:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: FILES_DIR
+          value: "/app/files"
+        - name: VECTORSTORE_DIR
+          value: "/app/chroma_db"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-service
+  namespace: chatbot-namespace
+spec:
+  selector:
+    app: ollama
+  ports:
+  - protocol: TCP
+    port: 11434
+    targetPort: 11434
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chatbot-service
+  namespace: chatbot-namespace
+spec:
+  selector:
+    app: chatbot
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+  type: LoadBalancer

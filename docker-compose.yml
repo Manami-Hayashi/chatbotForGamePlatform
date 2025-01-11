@@ -1,3 +1,4 @@
+
 services:
   ollama:
     image: ollama/ollama:latest
@@ -12,9 +13,7 @@ services:
       retries: 3
 
   chatbot:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: acrteam3chatbot.azurecr.io/chatbot:latest  # Replace with pre-built Docker image
     ports:
       - "3000:3000"
     depends_on:
@@ -22,6 +21,7 @@ services:
     environment:
       - FILES_DIR=/app/files
       - VECTORSTORE_DIR=/app/chroma_db
+      - OLLAMA_URL=http://ollama:11434  # Internal service name for communication
       - AZURE_KEYVAULT_NAME=team3chatbot
       - AZURE_SECRET_NAME=ollama-private-key
     volumes:
