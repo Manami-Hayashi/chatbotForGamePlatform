@@ -23,9 +23,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Switch to root user to adjust file permissions
 USER root
+
 # Copy and modify permissions for startup script
 COPY startup.sh /app/startup.sh
 RUN chmod +x /app/startup.sh
+
+# Copy the .env file into the container
+COPY .env /app/.env
 
 # Add a non-root user for running the application
 RUN useradd -ms /bin/bash appuser
@@ -40,3 +44,6 @@ EXPOSE 3000
 
 # Command to run the FastAPI app
 CMD ["uvicorn", "chatbot:app", "--host", "0.0.0.0", "--port", "3000"]
+
+# Default command to run the app
+ENTRYPOINT ["/app/startup.sh"]

@@ -21,4 +21,4 @@ else
 fi
 
 # Start the FastAPI app
-exec uvicorn chatbot:app --host 0.0.0.0 --port 8000
+exec uvicorn chatbot:app --host 0.0.0.0 --port 3000

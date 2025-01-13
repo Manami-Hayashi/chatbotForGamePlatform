@@ -19,7 +19,7 @@ environment = os.getenv("ENVIRONMENT", "local")  # Default to "local"
 
 # Configure URLs based on the environment
 if environment == "azure":
-    OLLAMA_URL = os.getenv("OLLAMA_URL", "https://ollama-app.azurecontainerapps.io")
+    OLLAMA_URL = os.getenv("OLLAMA_URL", "https://ollama-app.lemonwater-f19da583.westeurope.azurecontainerapps.io")
 else:
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")  # Local Ollama
 
@@ -77,8 +77,8 @@ async def chat_endpoint(request: ChatRequest):
         raise HTTPException(status_code=500, detail="Internal server error. Please try again later.")
 
 # Read frontend URLs from environment variables
-frontend_urls = os.getenv("FRONTEND_URLS", "http://localhost:5173").split(",")
-backend_urls=os.getenv("BACKEND_URLS", "http://localhost:8090").split(",")
+frontend_urls = os.getenv("FRONTEND_URLS", "https://gray-mushroom-0dba4a61e.4.azurestaticapps.net").split(",")
+backend_urls=os.getenv("BACKEND_URLS", "https://game-platform-container.nicehill-98b0fd60.westeurope.azurecontainerapps.io").split(",")
 
 # CORS middleware
 app.add_middleware(
