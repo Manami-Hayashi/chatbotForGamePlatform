@@ -83,7 +83,7 @@ backend_urls=os.getenv("BACKEND_URLS", "https://game-platform-container.nicehill
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_urls,backend_urls],  # Adjust based on your frontend URL for better security
+    allow_origins=[frontend_urls,backend_urls, "http://localhost:8090", "http://localhost:5173"],  # Adjust based on your frontend URL for better security
     allow_methods=["*"],
     allow_headers=["*"],
 )
