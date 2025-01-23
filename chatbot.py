@@ -37,24 +37,6 @@ class ChatRequest(BaseModel):
     userInput: str
     chatHistory: List[Message]
 
-# Query Ollama service
-def query_ollama(prompt: str) -> str:
-    """Send a prompt to the Ollama service and retrieve the response."""
-    import requests  # Only imported here to avoid unused imports locally
-    try:
-        headers = {"Content-Type": "application/json"}
-        payload = {"model": "llama", "prompt": prompt}
-
-        # Send the API request
-        response = requests.post(f"{OLLAMA_URL}/v1/completions", json=payload, headers=headers)
-        response.raise_for_status()
-
-        # Parse and return the response
-        result = response.json()
-        return result.get("choices", [{}])[0].get("message", {}).get("content", "No response from Ollama")
-    except Exception as e:
-        logger.error(f"Error querying Ollama: {e}")
-        raise HTTPException(status_code=500, detail="Error querying Ollama service")
 
 # Chat endpoint
 @app.post("/chat", response_model=Dict[str, str], summary="Chat Endpoint", description="Endpoint for chatbot interaction.")
@@ -77,8 +59,8 @@ async def chat_endpoint(request: ChatRequest):
         raise HTTPException(status_code=500, detail="Internal server error. Please try again later.")
 
 # Read frontend URLs from environment variables
-frontend_urls = os.getenv("FRONTEND_URLS", "https://gray-mushroom-0dba4a61e.4.azurestaticapps.net").split(",")
-backend_urls=os.getenv("BACKEND_URLS", "https://game-platform-container.nicehill-98b0fd60.westeurope.azurecontainerapps.io").split(",")
+frontend_urls = os.getenv("FRONTEND_URLS", "http://localhost:5173").split(",")
+backend_urls=os.getenv("BACKEND_URLS", "http://localhost:8090").split(",")
 
 # CORS middleware
 app.add_middleware(
