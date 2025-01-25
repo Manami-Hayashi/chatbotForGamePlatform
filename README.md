@@ -12,6 +12,11 @@ The chatbot uses **FastAPI**, **LangChain**, and **Ollama** to process and retri
 
 ---
 
+### Watch the demo
+[![Watch the video](https://img.youtube.com/vi/jL-ZSRnhiP0/maxresdefault.jpg)](https://www.youtube.com/watch?v=jL-ZSRnhiP0)
+
+---
+
 ## Features
 
 - **Game Rules Assistance**: Simplifies complex game rules into clear and actionable instructions.
